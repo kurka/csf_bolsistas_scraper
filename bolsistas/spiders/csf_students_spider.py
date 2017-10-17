@@ -5,7 +5,7 @@ from datetime import datetime, date
 
 
 class CSFSpider(scrapy.Spider):
-    name = "csf"
+    name = "csf_students"
     start_urls = ["http://www.cienciasemfronteiras.gov.br/web/csf/bolsistas-pelo-mundo?p_p_id=mapabolsistasportlet_WAR_mapabolsistasportlet_INSTANCE_Y7eO&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-2&p_p_col_count=1&siglaPais=GBR&nomePais=Reino%20Unido&codigoArea=&tituloArea=Todas&siglaModalidade=&nomeModalidade=Todas#"]
     # start_urls = ["http://www.cienciasemfronteiras.gov.br/web/csf/bolsistas-pelo-mundo"]
 
@@ -40,8 +40,8 @@ class CSFSpider(scrapy.Spider):
             all_students_base_url ="http://www.cienciasemfronteiras.gov.br/web/csf/bolsistas-pelo-mundo?p_p_id=mapabolsistasportlet_WAR_mapabolsistasportlet_INSTANCE_Y7eO&p_p_lifecycle=0&p_p_state=pop_up&p_p_mode=help&p_p_col_id=column-2&p_p_col_count=1&modal=modal&idDest="
             uni_students_url = all_students_base_url + id_uni
 
-            # yield uni_info as independent object
-            yield uni_info
+            # # yield uni_info as independent object
+            # yield uni_info
 
             #follow the link to get students info
             request = scrapy.Request(uni_students_url,
@@ -64,13 +64,13 @@ class CSFSpider(scrapy.Spider):
                                                st.contents[-1].strip().split(" a "))
             student_info = {
                 'student_name': st.h2.text.strip(),
-                'email_lattes': st.find(title="Enviar Email")["href"],
-                'cv_lattes': st.find(title=re.compile("Visualizar Curr.culo"))["href"],
+                'email_lattes': st.find(title="Enviar Email")["href"] if st.find(title="Enviar Email") else None,
+                'cv_lattes': st.find(title=re.compile("Visualizar Curr.culo"))["href"] if st.find(title=re.compile("Visualizar Curr.culo")) else None,
                 'univ_csf': uni_name,
                 'univ_lattes': univ_lattes, # TODO: split city
                 'bolsista_type': categ,
-                'area_prioritaria': st.contents[6].strip(),  # FIXME: dangerous index!
-                'area_conhecimento': st.contents[8].strip(),  # FIXME: dangerous index!
+                'area_prioritaria': st.contents[6].strip() if len(st.contents) > 6 else None,  # FIXME: dangerous index!
+                'area_conhecimento': st.contents[8].strip() if len(st.contents) > 8 else None,  # FIXME: dangerous index!
                 'vigencia_start': vigencia_start.isoformat(),
                 'vigencia_end': vigencia_end.isoformat(),
                 'vigente': vigencia_end > date.today()
