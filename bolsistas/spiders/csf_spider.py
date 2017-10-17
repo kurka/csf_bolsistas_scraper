@@ -1,6 +1,7 @@
 import scrapy
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime, date
 
 
 class CSFSpider(scrapy.Spider):
@@ -59,6 +60,8 @@ class CSFSpider(scrapy.Spider):
             univ_categ_re = re.search(r"(.*) (Bolsista .*)", st.contents[2])
             univ_lattes = univ_categ_re.group(1).strip()
             categ = univ_categ_re.group(2).strip()
+            vigencia_start, vigencia_end = map(lambda s: datetime.strptime(s, "%d/%m/%Y").date(),
+                                               st.contents[-1].strip().split(" a "))
             student_info = {
                 'student_name': st.h2.text.strip(),
                 'email_lattes': st.find(title="Enviar Email")["href"],
@@ -68,7 +71,9 @@ class CSFSpider(scrapy.Spider):
                 'bolsista_type': categ,
                 'area_prioritaria': st.contents[6].strip(),  # FIXME: dangerous index!
                 'area_conhecimento': st.contents[8].strip(),  # FIXME: dangerous index!
-                'vigencia': st.contents[-1].strip(),  # FIXME: dangerous index! TODO: transform this field into datestamp
+                'vigencia_start': vigencia_start.isoformat(),
+                'vigencia_end': vigencia_end.isoformat(),
+                'vigente': vigencia_end > date.today()
             }
 
             yield student_info
